@@ -299,7 +299,7 @@ var MODES={
   },
   shot:{
     label:"Shot Selection",
-    description:"The rim cycles between OPEN (green) and CONTESTED (red). Shoot only when it's open — shooting into a contested rim costs you."
+    description:"The rim flashes random colors. Shoot only when it's green — any other color is a contested look, and shooting into it costs you."
   }
 };
 
@@ -371,8 +371,28 @@ var dynamic={
   pulse:0
 };
 
+var SHOT_GO_COLOR={name:'green',c:'#3ddc6a',g:'rgba(61,220,106,1)',go:true};
+var SHOT_NOGO_COLORS=[
+  {name:'red',    c:'#ff3b3b',g:'rgba(255,59,59,1)'},
+  {name:'blue',   c:'#2f7bff',g:'rgba(47,123,255,1)'},
+  {name:'orange', c:'#ff9500',g:'rgba(255,149,0,1)'},
+  {name:'yellow', c:'#ffd60a',g:'rgba(255,214,10,1)'},
+  {name:'purple', c:'#a855f7',g:'rgba(168,85,247,1)'}
+];
+
+// Green appears on a wandering, unpredictable chance each cycle — no fixed
+// 1-in-N rate a player could count and anticipate. Same approach Reactific
+// uses for its own go/no-go color, just green is the "go" color here
+// instead of red.
+function shotPickColor(){
+  var chance=0.16+Math.random()*0.18; // green probability wanders ~16%-34% each cycle
+  if(Math.random()<chance)return SHOT_GO_COLOR;
+  return SHOT_NOGO_COLORS[Math.floor(Math.random()*SHOT_NOGO_COLORS.length)];
+}
+
 var shotState={
   isOpen:false,
+  currentColor:SHOT_NOGO_COLORS[0],
   cycleTimer:null,
   busted:false
 };
@@ -695,7 +715,7 @@ function selectShotBpm(value){
 function updateShotInfo(){
   var cycleMs=Math.round(60000/selectedShotBpm);
   shotInfo.textContent=
-    "The rim switches between open and contested every "+cycleMs+" ms. Shoot only when it's green — a wrong shot costs a point, and three wrong shots ends the round.";
+    "The rim flashes a random color every "+cycleMs+" ms — shoot only when it's green. Any other color is contested: a wrong shot costs a point, and three wrong shots ends the round.";
 }
 
 function selectTime(value){
@@ -1084,6 +1104,7 @@ function shotCycleIntervalMs(){
 }
 
 function startShotSelection(){
+  shotState.currentColor=SHOT_NOGO_COLORS[0];
   shotState.isOpen=false;
   shotState.busted=false;
   hoop.x=hoop.baseX;
@@ -1094,7 +1115,8 @@ function startShotSelection(){
 
 function shotCycleTick(){
   if(!gameRunning||!roundStarted||selectedMode!=="shot"){return;}
-  shotState.isOpen=!shotState.isOpen;
+  shotState.currentColor=shotPickColor();
+  shotState.isOpen=!!shotState.currentColor.go;
 }
 
 function stopShotSelection(){
@@ -1430,8 +1452,8 @@ function drawShotRim(t){
   var boardX=hoop.x-boardW/2;
   var boardY=hoop.y-boardH*.85;
   var open=shotState.isOpen;
-  var rimColor=open?"#3ddc6a":"#ff3b3b";
-  var rimGlow=open?"rgba(61,220,106,.9)":"rgba(255,59,59,.9)";
+  var rimColor=shotState.currentColor.c;
+  var rimGlow=shotState.currentColor.g;
 
   ctx.save();
 
