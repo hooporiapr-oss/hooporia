@@ -69,8 +69,6 @@ h1 span{color:#ff7e20}
 }
 #profileSection{flex:1.28}
 #modeSection{flex:.72}
-#focusOptions,#dynamicOptions{flex:1.08}
-#timeSection{flex:.92}
 .sectionTitle{
   margin-bottom:5px;color:#ff9b50;font-size:10px;font-weight:bold;
   letter-spacing:1.1px;text-transform:uppercase;line-height:1.1
@@ -558,9 +556,9 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 
         <div class="section" id="modeSection">
           <div class="sectionTitle">Training mode</div>
-          <div class="modeSubLabel">Basketball Vision</div>
+          <div class="modeSubLabel">Basketball Velocity</div>
           <div class="choiceGrid" style="grid-template-columns:1fr 1fr">
-            <button class="choiceBtn active" data-mode="dynamic" type="button">DYNAMIC VISION</button>
+            <button class="choiceBtn active" data-mode="dynamic" type="button">REACTION SPEED</button>
             <button class="choiceBtn" data-mode="shot" type="button">SHOT SELECTION</button>
           </div>
           <div class="modeSubLabel">Basketball Memory</div>
@@ -575,16 +573,6 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
       </div>
 
       <div class="selectionCol">
-        <div class="section hidden" id="dynamicOptions">
-          <div class="sectionTitle">Target pulse speed</div>
-          <div class="choiceGrid">
-            <button class="choiceBtn active" data-bpm="60" type="button">60 BPM</button>
-            <button class="choiceBtn" data-bpm="80" type="button">80 BPM</button>
-            <button class="choiceBtn" data-bpm="100" type="button">100 BPM</button>
-          </div>
-          <div id="dynamicInfo"></div>
-        </div>
-
         <div class="section hidden" id="shotOptions">
           <div class="sectionTitle">Shot cycle speed</div>
           <div class="choiceGrid">
@@ -592,15 +580,6 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
             <button class="choiceBtn" data-shotbpm="100" type="button">100 BPM</button>
           </div>
           <div id="shotInfo"></div>
-        </div>
-
-        <div class="section" id="timeSection">
-          <div class="sectionTitle">Timed round</div>
-          <div class="choiceGrid">
-            <button class="choiceBtn" data-time="30" type="button">30 SEC</button>
-            <button class="choiceBtn active" data-time="60" type="button">60 SEC</button>
-            <button class="choiceBtn" data-time="90" type="button">90 SEC</button>
-          </div>
         </div>
       </div>
     </div>
@@ -632,11 +611,8 @@ var addProfileBtn=document.getElementById("addProfileBtn");
 var deleteProfileBtn=document.getElementById("deleteProfileBtn");
 var profileStats=document.getElementById("profileStats");
 
-var dynamicOptions=document.getElementById("dynamicOptions");
 var shotOptions=document.getElementById("shotOptions");
-var timeSection=document.getElementById("timeSection");
 var modeInfo=document.getElementById("modeInfo");
-var dynamicInfo=document.getElementById("dynamicInfo");
 var shotInfo=document.getElementById("shotInfo");
 
 var hudPlayer=document.getElementById("hudPlayer");
@@ -657,8 +633,8 @@ var LEGACY_KEY="ritnome_basketball_focus_profiles_v2";
 
 var MODES={
   dynamic:{
-    label:"Dynamic Vision",
-    description:"A backboard and rim appear in random areas. React and click the rim center before the target disappears."
+    label:"Reaction Speed",
+    description:"50 taps, pure reaction time. A backboard and rim appear at random — click the rim center as fast as you can, then the next one appears."
   },
   shot:{
     label:"Shot Selection",
@@ -684,9 +660,7 @@ var MODES={
 
 var W=0,H=0,DPR=1;
 var selectedMode="dynamic";
-var selectedBpm=60;
 var selectedShotBpm=60;
-var selectedSeconds=60;
 var activeProfile="Guest";
 var profiles=loadProfiles();
 
@@ -705,7 +679,6 @@ var score=0;
 var attempts=0;
 var streak=0;
 var bestStreak=0;
-var falseStarts=0;
 
 var totalReaction=0;
 var reactionCount=0;
@@ -719,10 +692,10 @@ var hoop={baseX:0,baseY:0,x:0,y:0,rx:0,ry:0,frozenX:0,frozenY:0};
 var dynamic={
   visible:false,
   appearedAt:0,
-  hideAt:0,
   nextAt:0,
   resolved:false,
-  pulse:0
+  pulse:0,
+  tapLocked:false
 };
 
 var SHOT_GO_COLOR={name:'green',c:'#3ddc6a',g:'rgba(61,220,106,1)',go:true};
@@ -762,8 +735,7 @@ function now(){
 
 function blankDynamicStats(){
   return{
-    rounds:0,totalTargets:0,totalHits:0,totalSeconds:0,bestStreak:0,
-    bestAccuracy:0,bestHitsPerMin:0,fastestReaction:0,bestRounds:{},bestReactions:{}
+    rounds:0,totalTaps:0,totalScore:0,bestScore:0,bestAvgReaction:0,fastestReaction:0
   };
 }
 
@@ -793,15 +765,11 @@ function ensurePlayer(player){
 
 function ensureDynamic(s){
   if(typeof s.rounds!=="number"){s.rounds=0;}
-  if(typeof s.totalTargets!=="number"){s.totalTargets=0;}
-  if(typeof s.totalHits!=="number"){s.totalHits=0;}
-  if(typeof s.totalSeconds!=="number"){s.totalSeconds=0;}
-  if(typeof s.bestStreak!=="number"){s.bestStreak=0;}
-  if(typeof s.bestAccuracy!=="number"){s.bestAccuracy=0;}
-  if(typeof s.bestHitsPerMin!=="number"){s.bestHitsPerMin=0;}
+  if(typeof s.totalTaps!=="number"){s.totalTaps=0;}
+  if(typeof s.totalScore!=="number"){s.totalScore=0;}
+  if(typeof s.bestScore!=="number"){s.bestScore=0;}
+  if(typeof s.bestAvgReaction!=="number"){s.bestAvgReaction=0;}
   if(typeof s.fastestReaction!=="number"){s.fastestReaction=0;}
-  if(!s.bestRounds){s.bestRounds={};}
-  if(!s.bestReactions){s.bestReactions={};}
 }
 
 function ensureShot(s){
@@ -930,7 +898,6 @@ function deleteProfile(){
   refreshProfiles();
 }
 
-function dynamicRecordKey(){return selectedBpm+"_"+selectedSeconds;}
 function shotRecordKey(){return String(selectedShotBpm);}
 
 function formatOne(value){
@@ -949,17 +916,13 @@ function updateProfileStats(){
 
   if(selectedMode==="dynamic"){
     var d=player.dynamic;
-    var dynAccuracy=d.totalTargets?Math.round(d.totalHits/d.totalTargets*100):0;
-    var hitsPerMin=d.totalSeconds?d.totalHits*60/d.totalSeconds:0;
-    var dynBest=d.bestRounds[dynamicRecordKey()]||0;
-    var dynReaction=d.bestReactions[dynamicRecordKey()]||0;
+    var avgScore=d.rounds?Math.round(d.totalScore/d.rounds):0;
     profileStats.innerHTML=
-      "<strong>"+escapeHtml(activeProfile)+"</strong> · Dynamic rounds "+d.rounds+
-      " · Career "+dynAccuracy+"% · "+formatOne(hitsPerMin)+" hits/min"+
-      " · Best streak "+d.bestStreak+
-      " · Fastest "+formatMs(d.fastestReaction)+
-      " · Best "+selectedBpm+" BPM "+selectedSeconds+"s: "+dynBest+
-      " hits · avg "+formatMs(dynReaction);
+      "<strong>"+escapeHtml(activeProfile)+"</strong> · Reaction Speed rounds "+d.rounds+
+      " · Best score "+d.bestScore+
+      " · Best avg reaction "+formatMs(d.bestAvgReaction)+
+      " · Fastest single tap "+formatMs(d.fastestReaction)+
+      " · Avg score/round "+avgScore;
   }else{
     var sh=player.shot;
     var shotAccuracy=sh.totalShots?Math.round(sh.totalMakes/sh.totalShots*100):0;
@@ -978,14 +941,11 @@ function selectMode(mode){
   selectedMode=mode;
 
   setActiveButtons("[data-mode]","data-mode",mode);
-  dynamicOptions.className=mode==="dynamic"?"section":"section hidden";
   shotOptions.className=mode==="shot"?"section":"section hidden";
-  timeSection.className=(mode==="dynamic")?"section":"section hidden";
   modeInfo.textContent=MODES[mode].description;
 
   if(mode==="dynamic"){
-    updateDynamicInfo();
-    startBtn.textContent="START DYNAMIC ROUND";
+    startBtn.textContent="START REACTION SPEED";
   }else if(mode==="shot"){
     updateShotInfo();
     startBtn.textContent="START SHOT ROUND";
@@ -1001,22 +961,6 @@ function selectMode(mode){
 
   updateProfileStats();
   updateHud();
-}
-
-function selectBpm(value){
-  value=parseInt(value,10);
-  if(value!==60&&value!==80&&value!==100){value=60;}
-  selectedBpm=value;
-  setActiveButtons("[data-bpm]","data-bpm",String(value));
-  updateDynamicInfo();
-  updateProfileStats();
-  updateHud();
-}
-
-function updateDynamicInfo(){
-  var visible=Math.round(60000/selectedBpm);
-  dynamicInfo.textContent=
-    "The target stays visible for "+visible+" ms, then disappears. The next target appears after a fixed 1,000 ms delay.";
 }
 
 function selectShotBpm(value){
@@ -1035,13 +979,6 @@ function updateShotInfo(){
     "200 shots at "+selectedShotBpm+" BPM, one every "+cycleMs+" ms. Shoot only when it's green. "+
     "The rim holds steady for the first 50, moves randomly for the next 100, then steadies again for the last 50. "+
     "A wrong shot costs a point, and three wrong shots in a row ends the round early.";
-}
-
-function selectTime(value){
-  selectedSeconds=parseInt(value,10)||60;
-  setActiveButtons("[data-time]","data-time",String(selectedSeconds));
-  updateProfileStats();
-  hudTime.textContent=selectedSeconds;
 }
 
 function setActiveButtons(selector,attribute,value){
@@ -1098,19 +1035,19 @@ function elapsedSeconds(t){
 function updateHud(t){
   t=typeof t==="number"?t:now();
   hudPlayer.textContent=activeProfile;
-  hudTime.textContent=selectedMode==="shot"?(shotState.cycleCount+"/200"):(roundStarted?Math.max(0,Math.ceil((roundEnd-t)/1000)):selectedSeconds);
+  hudTime.textContent=selectedMode==="shot"?(shotState.cycleCount+"/200"):(attempts+"/"+REACTION_SPEED_TOTAL);
   hudScore.textContent=score;
   hudAttempts.textContent=attempts;
   hudStreak.textContent=streak;
-  hudAccuracy.textContent=(selectedMode!=="shot"&&attempts)?Math.round(score/attempts*100)+"%":(selectedMode==="shot"?"--":"0%");
+  hudAccuracy.textContent=selectedMode==="dynamic"?(reactionCount?Math.round(totalReaction/reactionCount/1)+" ms":"--"):(selectedMode!=="shot"&&attempts?Math.round(score/attempts*100)+"%":(selectedMode==="shot"?"--":"0%"));
 
   if(selectedMode==="dynamic"){
-    hudSettingLabel.textContent="Pulse";
-    hudSetting.textContent=selectedBpm+" BPM";
-    hudScoreLabel.textContent="Hits";
-    hudAttemptLabel.textContent="Targets";
-    hudMetricLabel.textContent="Avg React";
-    hudMetric.textContent=reactionCount?Math.round(totalReaction/reactionCount)+" ms":"--";
+    hudSettingLabel.textContent="Pace";
+    hudSetting.textContent="100 BPM";
+    hudScoreLabel.textContent="Score";
+    hudAttemptLabel.textContent="Taps";
+    hudMetricLabel.textContent="Fastest";
+    hudMetric.textContent=fastestReaction?Math.round(fastestReaction)+" ms":"--";
   }else{
     hudSettingLabel.textContent="Pulse";
     hudSetting.textContent=selectedShotBpm+" BPM";
@@ -1125,10 +1062,6 @@ function distance(x1,y1,x2,y2){
   var dx=x1-x2;
   var dy=y1-y2;
   return Math.sqrt(dx*dx+dy*dy);
-}
-
-function dynamicVisibleMs(){
-  return 60000/selectedBpm;
 }
 
 function chooseDynamicPosition(){
@@ -1154,93 +1087,66 @@ function chooseDynamicPosition(){
   }while(tries<8&&distance(hoop.x,hoop.y,oldX,oldY)<Math.min(W,H)*.24);
 }
 
+// ── REACTION SPEED — same mechanic as Reaction Velocity's Reaction Speed
+//    drill, on the basketball court. Fixed 100 BPM pace, 50 total taps, no
+//    time limit, no miss/false-start concept — the target simply waits
+//    until tapped, then the next one appears after a fixed 600ms beat.
+var REACTION_SPEED_TOTAL=50;
+var REACTION_SPEED_PACE_MS=600;
+
 function showDynamicTarget(t){
   chooseDynamicPosition();
   dynamic.visible=true;
   dynamic.appearedAt=t;
-  dynamic.hideAt=t+dynamicVisibleMs();
   dynamic.resolved=false;
   dynamic.pulse=Math.random()*Math.PI*2;
   attempts++;
-  setMessage("REACT — CLICK THE RIM CENTER!");
-  updateHud(t);
-}
-
-function hideDynamicTarget(t,wasHit){
-  dynamic.visible=false;
-  dynamic.resolved=true;
-  dynamic.nextAt=t+1000;
-  if(!wasHit){
-    streak=0;
-    resultText="TOO SLOW";
-    resultUntil=t+520;
-    setMessage("Target missed. Watch for the next pulse.");
-    beep(false);
-  }
+  setMessage("REACT — CLICK THE RIM!");
   updateHud(t);
 }
 
 function handleDynamicClick(x,y){
-  if(selectedMode!=="dynamic"||!gameRunning||!roundStarted||!acceptingInput){return;}
-
-  var t=now();
-
-  if(!dynamic.visible){
-    falseStarts++;
-    streak=0;
-    clickMarker.x=x;
-    clickMarker.y=y;
-    clickMarker.until=t+260;
-    clickMarker.success=false;
-    setMessage("WAIT — click only when the target appears.");
-    return;
-  }
+  if(selectedMode!=="dynamic"||!gameRunning||!roundStarted||!acceptingInput||!dynamic.visible||dynamic.tapLocked){return;}
 
   var hitRadius=Math.max(18,hoop.rx*.42);
-  var hit=distance(x,y,hoop.x,hoop.y)<=hitRadius;
+  if(distance(x,y,hoop.x,hoop.y)>hitRadius){return;}
+
+  var t=now();
+  dynamic.tapLocked=true;
+  setTimeout(function(){dynamic.tapLocked=false;},40);
+
   var reaction=t-dynamic.appearedAt;
+  dynamic.visible=false;
+  dynamic.resolved=true;
+
+  totalReaction+=reaction;
+  reactionCount++;
+  if(!fastestReaction||reaction<fastestReaction){fastestReaction=reaction;}
+  var pts=Math.max(1,Math.round(300-reaction/4));
+  score+=pts;
 
   clickMarker.x=x;
   clickMarker.y=y;
   clickMarker.until=t+360;
-  clickMarker.success=hit;
-
-  if(hit){
-    score++;
-    streak++;
-    if(streak>bestStreak){bestStreak=streak;}
-    totalReaction+=reaction;
-    reactionCount++;
-    if(!fastestReaction||reaction<fastestReaction){fastestReaction=reaction;}
-    resultText=Math.round(reaction)+" ms";
-    resultUntil=t+620;
-    createParticles(hoop.x,hoop.y,true);
-    beep(true);
-    setMessage("HIT — "+Math.round(reaction)+" ms");
-    dynamic.visible=false;
-    dynamic.resolved=true;
-    dynamic.nextAt=t+1000;
-  }else{
-    streak=0;
-    resultText="OFF TARGET";
-    resultUntil=t+520;
-    createParticles(x,y,false);
-    beep(false);
-    setMessage("Missed center. Watch for the next target.");
-    dynamic.visible=false;
-    dynamic.resolved=true;
-    dynamic.nextAt=t+1000;
-  }
+  clickMarker.success=true;
+  resultText=Math.round(reaction)+" ms";
+  resultUntil=t+620;
+  createParticles(hoop.x,hoop.y,true);
+  beep(true);
+  setMessage(Math.round(reaction)+" ms · "+Math.round(60000/Math.max(1,reaction))+" BPM");
 
   updateHud(t);
+
+  if(attempts>=REACTION_SPEED_TOTAL){
+    setTimeout(finishRound,400);
+  }else{
+    dynamic.nextAt=t+REACTION_SPEED_PACE_MS;
+  }
 }
 
 function updateDynamic(t){
   if(selectedMode!=="dynamic"||!gameRunning||!roundStarted){return;}
-
-  if(dynamic.visible&&t>=dynamic.hideAt){
-    hideDynamicTarget(t,false);
-  }else if(!dynamic.visible&&t>=dynamic.nextAt&&t<roundEnd){
+  if(!dynamic.visible&&t>=dynamic.nextAt&&attempts<REACTION_SPEED_TOTAL){
     showDynamicTarget(t);
   }
 }
@@ -1402,7 +1308,6 @@ function startRound(e){
   attempts=0;
   streak=0;
   bestStreak=0;
-  falseStarts=0;
   totalReaction=0;
   reactionCount=0;
   fastestReaction=0;
@@ -1414,9 +1319,9 @@ function startRound(e){
 
   dynamic.visible=false;
   dynamic.appearedAt=0;
-  dynamic.hideAt=0;
   dynamic.nextAt=0;
   dynamic.resolved=false;
+  dynamic.tapLocked=false;
 
   stopShotSelection();
   shotState.isOpen=false;
@@ -1446,7 +1351,7 @@ function beginTimedRound(t){
   roundStarted=true;
   acceptingInput=true;
   roundStart=t;
-  roundEnd=selectedMode==="shot"?(t+999999999):(t+selectedSeconds*1000);
+  roundEnd=t+999999999;
 
   if(selectedMode==="dynamic"){
     dynamic.nextAt=t+250;
@@ -1491,32 +1396,25 @@ function finishRound(){
   var key;
 
   if(selectedMode==="dynamic"){
-    var hitsPerMin=selectedSeconds?score*60/selectedSeconds:0;
-    var averageReaction=reactionCount?totalReaction/reactionCount:0;
+    var averageReaction=reactionCount?Math.round(totalReaction/reactionCount):0;
     var d=player.dynamic;
-    key=dynamicRecordKey();
 
     d.rounds++;
-    d.totalTargets+=attempts;
-    d.totalHits+=score;
-    d.totalSeconds+=selectedSeconds;
-    if(bestStreak>d.bestStreak){d.bestStreak=bestStreak;}
-    if(accuracy>d.bestAccuracy){d.bestAccuracy=accuracy;}
-    if(hitsPerMin>d.bestHitsPerMin){d.bestHitsPerMin=hitsPerMin;}
+    d.totalTaps+=attempts;
+    d.totalScore+=score;
+    if(score>d.bestScore){d.bestScore=score;}
+    if(averageReaction&&(!d.bestAvgReaction||averageReaction<d.bestAvgReaction)){
+      d.bestAvgReaction=averageReaction;
+    }
     if(fastestReaction&&(!d.fastestReaction||fastestReaction<d.fastestReaction)){
       d.fastestReaction=fastestReaction;
     }
-    if(score>(d.bestRounds[key]||0)){d.bestRounds[key]=score;}
-    if(averageReaction&&(!d.bestReactions[key]||averageReaction<d.bestReactions[key])){
-      d.bestReactions[key]=averageReaction;
-    }
 
     resultBox.innerHTML=
-      "<strong>Dynamic Vision complete</strong><br>"+
-      "Hits: "+score+" of "+attempts+" · Accuracy: "+accuracy+"%<br>"+
-      "Average reaction: "+formatMs(averageReaction)+" · Fastest: "+formatMs(fastestReaction)+"<br>"+
-      "Best streak: "+bestStreak+" · False starts: "+falseStarts+
-      " · Hit pace: "+formatOne(hitsPerMin)+"/min";
+      "<strong>Reaction Speed complete</strong><br>"+
+      "Score: "+score+" points · Taps: "+attempts+"<br>"+
+      "Average reaction: "+formatMs(averageReaction)+" · Fastest tap: "+formatMs(fastestReaction)+"<br>"+
+      "Best score: "+d.bestScore+" · Best avg reaction: "+formatMs(d.bestAvgReaction);
   }else{
     var netScore=score;
     var goodShotPct=attempts?Math.round((score>0?score:0)/attempts*100):0;
@@ -1543,7 +1441,7 @@ function finishRound(){
   saveProfiles();
 
   resultBox.style.display="block";
-  startBtn.textContent=selectedMode==="dynamic"?"PLAY DYNAMIC AGAIN":"PLAY SHOT SELECTION AGAIN";
+  startBtn.textContent=selectedMode==="dynamic"?"PLAY REACTION SPEED AGAIN":"PLAY SHOT SELECTION AGAIN";
   overlay.style.display="flex";
   backBtn.style.display="none";
   hud.style.display="none";
@@ -1861,24 +1759,10 @@ for(i=0;i<modeButtons.length;i++){
   },false);
 }
 
-var bpmButtons=document.querySelectorAll("[data-bpm]");
-for(i=0;i<bpmButtons.length;i++){
-  bpmButtons[i].addEventListener("click",function(){
-    selectBpm(this.getAttribute("data-bpm"));
-  },false);
-}
-
 var shotBpmButtons=document.querySelectorAll("[data-shotbpm]");
 for(i=0;i<shotBpmButtons.length;i++){
   shotBpmButtons[i].addEventListener("click",function(){
     selectShotBpm(this.getAttribute("data-shotbpm"));
-  },false);
-}
-
-var timeButtons=document.querySelectorAll("[data-time]");
-for(i=0;i<timeButtons.length;i++){
-  timeButtons[i].addEventListener("click",function(){
-    selectTime(this.getAttribute("data-time"));
   },false);
 }
 
@@ -1895,9 +1779,7 @@ window.addEventListener("resize",resize,false);
 activeProfile=profiles.active||"Guest";
 resize();
 refreshProfiles();
-selectBpm(60);
 selectShotBpm(80);
-selectTime(60);
 selectMode("dynamic");
 updateHud();
 window.requestAnimationFrame(frame);
