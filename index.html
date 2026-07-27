@@ -145,7 +145,7 @@ select,input{
   #resultBox{max-height:58px;font-size:10px}
 }
 
-/* -- Sequence Memory (embedded, own scope) -- */
+/* -- Basketball Recall (embedded, own scope) -- */
 
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;color:#fff;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
@@ -566,7 +566,7 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
           </div>
           <div class="modeSubLabel">Basketball Memory</div>
           <div class="choiceGrid" style="grid-template-columns:1fr 1fr">
-            <button class="choiceBtn" data-mode="sequence" type="button">SEQUENCE MEMORY</button>
+            <button class="choiceBtn" data-mode="sequence" type="button">BASKETBALL RECALL</button>
             <button class="choiceBtn" data-mode="reflexmemory" type="button">BASKETBALL REFLEX</button>
             <button class="choiceBtn" data-mode="replaymemory" type="button">BASKETBALL REPLAY</button>
             <button class="choiceBtn" data-mode="recognitionmemory" type="button">BASKETBALL RECOGNITION</button>
@@ -683,7 +683,7 @@ var MODES={
     description:"The rim flashes random colors. Shoot only when it's green — any other color is a contested look, and shooting into it costs you."
   },
   sequence:{
-    label:"Sequence Memory",
+    label:"Basketball Recall",
     description:"Watch a sequence flash across the full court, then tap it back in the exact order it was shown."
   },
   reflexmemory:{
@@ -1070,7 +1070,7 @@ function selectMode(mode){
     updateShotInfo();
     startBtn.textContent="START SHOT ROUND";
   }else if(mode==="sequence"){
-    startBtn.textContent="OPEN SEQUENCE MEMORY";
+    startBtn.textContent="OPEN BASKETBALL RECALL";
   }else if(mode==="reflexmemory"){
     startBtn.textContent="OPEN BASKETBALL REFLEX";
   }else if(mode==="replaymemory"){
@@ -2269,12 +2269,12 @@ window.requestAnimationFrame(frame);
 })();
 </script>
 
-<!-- Sequence Memory screen (embedded, own scope) -->
+<!-- Basketball Recall screen (embedded, own scope) -->
 <div id="sequenceScreen" style="display:none;position:fixed;inset:0;z-index:30">
 <div id="screen-intro">
   <button style="position:fixed;top:16px;left:16px;padding:8px 16px;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;cursor:pointer;z-index:120" id="seqExitBtn" type="button">← Back</button>
   <button class="top-fs" id="fsBtnTop">⛶ Fullscreen</button>
-  <div class="vrr-logo">SEQUENCE <span>MEMORY</span></div>
+  <div class="vrr-logo">BASKETBALL <span>RECALL</span></div>
   <div class="vrr-sub">Full Court · Hooporia Basketball Memory</div>
   <div class="vrr-rule">🧩 MEMORIZE THE PATTERN — TAP IT BACK</div>
   <div style="font-size:.85rem;font-weight:900;letter-spacing:.15em;text-transform:uppercase;color:#FF6B35;margin-bottom:14px;text-align:center">⚡ RITNOME 100 · 100 BPM</div>
