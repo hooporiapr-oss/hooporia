@@ -2327,10 +2327,6 @@ window.requestAnimationFrame(frame);
 (function(){
 var $=id=>document.getElementById(id);
 
-// CYCLE MODE — two additions
-var cycleMode=new URLSearchParams(window.location.search).get('cycle')==='true';
-var NEXT_GAME='/vr-numhunt.html?cycle=true';
-
 var bpm=100;
 var STARTING_CELLS=3;
 
@@ -2394,22 +2390,13 @@ function stopFullStrobe(){
   var el=$('fsStrobe');el.style.transition='none';el.style.opacity='0';
 }
 
-// If cycle mode, skip intro and go straight to game
-if(cycleMode){
-  $('screen-intro').style.display='none';
-  $('screen-game').style.display='flex';
-  buildCourt();
-  updateHUD();
-  setTimeout(startRound,1000);
-}else{
-  $('seqStartBtn').onclick=function(){
-    $('screen-intro').style.display='none';$('screen-game').style.display='flex';
-    g.cellCount=getInitialCellCount();g.roundsDone=0;
-    buildCourt();updateHUD();
-    resizeCourtToFit();
-    try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
+$('seqStartBtn').onclick=function(){
+  $('screen-intro').style.display='none';$('screen-game').style.display='flex';
+  g.cellCount=getInitialCellCount();g.roundsDone=0;
+  buildCourt();updateHUD();
+  resizeCourtToFit();
+  try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
   };
-}
 
 // Keeps the court at a true 2:1 ratio (matching the drawn court background
 // exactly), fitting the largest size that stays inside the available area
@@ -2594,20 +2581,10 @@ function endGame(wrongIdx){
   g.streak=0;updateHUD();
   msg(wrongIdx!==null?'WRONG ORDER!':'⏱ TIME UP!','miss');
 
-  if(cycleMode){
-    timers.push(setTimeout(function(){
-      pattern.forEach(function(pi,n){cellSt(pi,'reveal',n+1)});
-      timers.push(setTimeout(function(){
-        msg('NEXT GAME...','watch');
-        timers.push(setTimeout(function(){window.location.href=NEXT_GAME},1200));
-      },1800));
-    },500));
-  }else{
-    timers.push(setTimeout(function(){
-      pattern.forEach(function(pi,n){cellSt(pi,'reveal',n+1)});
-      timers.push(setTimeout(showFinalScore,900));
-    },400));
-  }
+  timers.push(setTimeout(function(){
+    pattern.forEach(function(pi,n){cellSt(pi,'reveal',n+1)});
+    timers.push(setTimeout(showFinalScore,900));
+  },400));
 }
 
 function autoNextRound(){if(phase!=='idle')return;resetCells();$('clockFill').style.width='0%';$('hPf').textContent='--';$('actBtn').disabled=true;$('restartBtn').style.display='none';startRound()}
@@ -2704,10 +2681,6 @@ buildCourt();
 (function(){
 var $=id=>document.getElementById(id);
 
-// CYCLE MODE — two additions
-var cycleMode=new URLSearchParams(window.location.search).get('cycle')==='true';
-var NEXT_GAME='/vr-reactific.html?cycle=true';
-
 var bpm=100;
 var STARTING_CELLS=3;
 
@@ -2771,22 +2744,13 @@ function stopFullStrobe(){
   var el=$('reflex_fsStrobe');el.style.transition='none';el.style.opacity='0';
 }
 
-// If cycle mode, skip intro and go straight to game
-if(cycleMode){
-  $('reflex_screen-intro').style.display='none';
-  $('reflex_screen-game').style.display='flex';
-  buildCourt();
-  updateHUD();
-  setTimeout(startRound,1000);
-}else{
-  $('reflex_startBtn').onclick=function(){
-    $('reflex_screen-intro').style.display='none';$('reflex_screen-game').style.display='flex';
-    g.cellCount=getInitialCellCount();g.roundsDone=0;
-    buildCourt();updateHUD();
-    resizeCourtToFit();
-    try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
+$('reflex_startBtn').onclick=function(){
+  $('reflex_screen-intro').style.display='none';$('reflex_screen-game').style.display='flex';
+  g.cellCount=getInitialCellCount();g.roundsDone=0;
+  buildCourt();updateHUD();
+  resizeCourtToFit();
+  try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
   };
-}
 
 // Keeps the court at a true 2:1 ratio (matching the drawn court background
 // exactly), fitting the largest size that stays inside the available area.
@@ -2969,20 +2933,10 @@ function endGame(wrongIdx){
   g.streak=0;updateHUD();
   msg(wrongIdx!==null?'WRONG CELL!':'⏱ TIME UP!','rbb-miss');
 
-  if(cycleMode){
-    timers.push(setTimeout(function(){
-      targets.forEach(function(pi){if(found.indexOf(pi)===-1)cellSt(pi,'rbb-missed')});
-      timers.push(setTimeout(function(){
-        msg('NEXT GAME...','rbb-watch');
-        timers.push(setTimeout(function(){window.location.href=NEXT_GAME},1200));
-      },1800));
-    },500));
-  }else{
-    timers.push(setTimeout(function(){
-      targets.forEach(function(pi){if(found.indexOf(pi)===-1)cellSt(pi,'rbb-missed')});
-      timers.push(setTimeout(showFinalScore,900));
-    },400));
-  }
+  timers.push(setTimeout(function(){
+    targets.forEach(function(pi){if(found.indexOf(pi)===-1)cellSt(pi,'rbb-missed')});
+    timers.push(setTimeout(showFinalScore,900));
+  },400));
 }
 
 function autoNextRound(){if(phase!=='idle')return;resetCells();$('reflex_clockFill').style.width='0%';$('reflex_hPf').textContent='--';$('reflex_actBtn').disabled=true;$('reflex_restartBtn').style.display='none';startRound()}
@@ -3079,10 +3033,6 @@ $('reflexExitBtn').onclick=function(){stopFullStrobe();stopRecallTimer();$('refl
 (function(){
 var $=id=>document.getElementById(id);
 
-// CYCLE MODE — two additions
-var cycleMode=new URLSearchParams(window.location.search).get('cycle')==='true';
-var NEXT_GAME='/vr-reactific.html?cycle=true';
-
 var bpm=100;
 var STARTING_CELLS=3;
 
@@ -3152,22 +3102,13 @@ function startRecallTimer(){
 }
 function stopRecallTimer(){if(recallRAF){cancelAnimationFrame(recallRAF);recallRAF=null}}
 
-// If cycle mode, skip intro and go straight to game
-if(cycleMode){
-  $('replay_screen-intro').style.display='none';
-  $('replay_screen-game').style.display='flex';
-  buildCourt();
-  updateHUD();
-  setTimeout(startRound,1000);
-}else{
-  $('replay_startBtn').onclick=function(){
-    $('replay_screen-intro').style.display='none';$('replay_screen-game').style.display='flex';
-    g.cellCount=getInitialCellCount();g.roundsDone=0;
-    buildCourt();updateHUD();
-    resizeCourtToFit();
-    try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
+$('replay_startBtn').onclick=function(){
+  $('replay_screen-intro').style.display='none';$('replay_screen-game').style.display='flex';
+  g.cellCount=getInitialCellCount();g.roundsDone=0;
+  buildCourt();updateHUD();
+  resizeCourtToFit();
+  try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
   };
-}
 
 function resizeCourtToFit(){
   var area=document.querySelector('.rby-court-area');
@@ -3351,20 +3292,10 @@ function endGame(wrongIdx){
   g.streak=0;updateHUD();
   msg(wrongIdx!==null?'WRONG ORDER!':'⏱ TIME UP!','rby-miss');
 
-  if(cycleMode){
-    timers.push(setTimeout(function(){
-      sequence.forEach(function(si,n){cellSt(si,'rby-correct',n+1)});
-      timers.push(setTimeout(function(){
-        msg('NEXT GAME...','rby-watch');
-        timers.push(setTimeout(function(){window.location.href=NEXT_GAME},1200));
-      },1800));
-    },500));
-  }else{
-    timers.push(setTimeout(function(){
-      sequence.forEach(function(si,n){cellSt(si,'rby-correct',n+1)});
-      timers.push(setTimeout(showFinalScore,900));
-    },400));
-  }
+  timers.push(setTimeout(function(){
+    sequence.forEach(function(si,n){cellSt(si,'rby-correct',n+1)});
+    timers.push(setTimeout(showFinalScore,900));
+  },400));
 }
 
 function autoNextRound(){if(phase!=='idle')return;resetCells();$('replay_clockFill').style.width='0%';$('replay_hTr').textContent='--';$('replay_actBtn').disabled=true;$('replay_restartBtn').style.display='none';startRound()}
@@ -3461,10 +3392,6 @@ $('replayExitBtn').onclick=function(){stopFullStrobe();stopRecallTimer();$('repl
 (function(){
 var $=id=>document.getElementById(id);
 
-// CYCLE MODE — two additions
-var cycleMode=new URLSearchParams(window.location.search).get('cycle')==='true';
-var NEXT_GAME='/vr-recall.html?cycle=true';
-
 var bpm=100;
 var STARTING_CELLS=3;
 
@@ -3547,22 +3474,13 @@ function startTimer(dur){
 }
 function stopTimer(){if(timerRAF)cancelAnimationFrame(timerRAF);timerRAF=null;$('recog_timerFill').style.width='100%';$('recog_timerFill').className='rcg-timerbar-fill'}
 
-// If cycle mode, skip intro and go straight to game
-if(cycleMode){
-  $('recog_screen-intro').style.display='none';
-  $('recog_screen-game').style.display='flex';
-  buildCourt();
-  updateHUD();
-  setTimeout(startRound,1000);
-}else{
-  $('recog_startBtn').onclick=function(){
-    $('recog_screen-intro').style.display='none';$('recog_screen-game').style.display='flex';
-    g.cellCount=getInitialCellCount();g.roundsDone=0;
-    buildCourt();updateHUD();
-    resizeCourtToFit();
-    try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
+$('recog_startBtn').onclick=function(){
+  $('recog_screen-intro').style.display='none';$('recog_screen-game').style.display='flex';
+  g.cellCount=getInitialCellCount();g.roundsDone=0;
+  buildCourt();updateHUD();
+  resizeCourtToFit();
+  try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
   };
-}
 
 function resizeCourtToFit(){
   var area=document.querySelector('.rcg-court-area');
@@ -3751,14 +3669,7 @@ function endGame(wrongIdx,alreadyRevealed){
   g.streak=0;updateHUD();
   if(!alreadyRevealed)msg('WRONG CELL!','rcg-miss');
 
-  if(cycleMode){
-    timers.push(setTimeout(function(){
-      msg('NEXT GAME...','rcg-watch');
-      timers.push(setTimeout(function(){window.location.href=NEXT_GAME},1200));
-    },1800));
-  }else{
-    timers.push(setTimeout(showFinalScore,1000));
-  }
+  timers.push(setTimeout(showFinalScore,1000));
 }
 
 function showFinalScore(){
