@@ -662,7 +662,7 @@ var MODES={
   },
   shot:{
     label:"Shot Selection",
-    description:"50 shots at the rim's beat. Shoot only when it's green. Steady for 10, moving for 30, steady again for the last 10."
+    description:"200 shots at the rim's beat. Shoot only when it's green. Steady for 50, moving for 100, steady again for the last 50."
   },
   sequence:{
     label:"Basketball Recall",
@@ -1032,8 +1032,8 @@ function selectShotBpm(value){
 function updateShotInfo(){
   var cycleMs=Math.round(60000/selectedShotBpm);
   shotInfo.textContent=
-    "50 shots at "+selectedShotBpm+" BPM, one every "+cycleMs+" ms. Shoot only when it's green. "+
-    "The rim holds steady for the first 10, moves randomly for the next 30, then steadies again for the last 10. "+
+    "200 shots at "+selectedShotBpm+" BPM, one every "+cycleMs+" ms. Shoot only when it's green. "+
+    "The rim holds steady for the first 50, moves randomly for the next 100, then steadies again for the last 50. "+
     "A wrong shot costs a point, and three wrong shots in a row ends the round early.";
 }
 
@@ -1098,7 +1098,7 @@ function elapsedSeconds(t){
 function updateHud(t){
   t=typeof t==="number"?t:now();
   hudPlayer.textContent=activeProfile;
-  hudTime.textContent=selectedMode==="shot"?(shotState.cycleCount+"/50"):(roundStarted?Math.max(0,Math.ceil((roundEnd-t)/1000)):selectedSeconds);
+  hudTime.textContent=selectedMode==="shot"?(shotState.cycleCount+"/200"):(roundStarted?Math.max(0,Math.ceil((roundEnd-t)/1000)):selectedSeconds);
   hudScore.textContent=score;
   hudAttempts.textContent=attempts;
   hudStreak.textContent=streak;
@@ -1269,14 +1269,14 @@ function shotCycleTick(){
   if(!gameRunning||!roundStarted||selectedMode!=="shot"){return;}
   shotState.cycleCount++;
 
-  // Three phases across 50 total cycles: steady for the first 10, moving
+  // Three phases across 200 total cycles: steady for the first 50, moving
   // randomly (a genuinely fresh random spot every cycle, not a repeating
-  // pattern) for the next 30, then steady again for the final 10 — so the
+  // pattern) for the next 100, then steady again for the final 50 — so the
   // difficulty ramps up partway through and eases back down at the end.
-  if(shotState.cycleCount<=10){
+  if(shotState.cycleCount<=50){
     hoop.x=hoop.baseX;
     hoop.y=hoop.baseY;
-  }else if(shotState.cycleCount<=40){
+  }else if(shotState.cycleCount<=150){
     chooseDynamicPosition();
   }else{
     hoop.x=hoop.baseX;
@@ -1287,7 +1287,7 @@ function shotCycleTick(){
   shotState.isOpen=!!shotState.currentColor.go;
   updateHud();
 
-  if(shotState.cycleCount>=50){
+  if(shotState.cycleCount>=200){
     stopShotSelection();
     setTimeout(function(){ if(gameRunning&&selectedMode==="shot"){finishRound();} },Math.min(400,shotCycleIntervalMs()*.6));
   }
