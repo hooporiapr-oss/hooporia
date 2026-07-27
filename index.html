@@ -2488,8 +2488,6 @@ buildCourt();
     <button class="rbb-bot-btn rbb-start-btn" id="reflex_actBtn">LET'S GO</button>
     <button class="rbb-bot-btn rbb-repeat-btn" id="reflex_repeatBtn">↻ REPEAT<span>1 per round</span></button>
     <button class="rbb-bot-btn" id="reflex_restartBtn" style="display:none;visibility:hidden;pointer-events:none;width:0;height:0;padding:0;margin:0;border:0;overflow:hidden;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.04);color:#8892a0;font-size:.8rem" onclick="restartGame()">↺ Restart<span style="color:#555">Level 1</span></button>
-    <button class="rbb-bot-btn" id="reflex_fsBtnCourt">⛶ Full Court<span>Fullscreen</span></button>
-    
   </div>
 </div>
 
@@ -2605,7 +2603,6 @@ window.addEventListener('resize',resizeCourtToFit);
 
 $('reflex_menuBtn').onclick=function(){stopFullStrobe();stopRecallTimer();$('reflex_screen-game').style.display='none';$('reflex_screen-intro').style.display='flex';document.getElementById('basketballReflexScreen').style.display='none';document.getElementById('overlay').style.display='flex'};
 $('reflex_fsBtnTop').onclick=async function(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){}};
-$('reflex_fsBtnCourt').onclick=async function(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){}};
 
 var cells=[];
 function buildCourt(){var court=$('reflex_court');court.innerHTML='';cells=[];for(var i=0;i<50;i++){var c=document.createElement('div');c.className='rbb-cell';c.dataset.i=i;c.addEventListener('pointerdown',(function(idx){return function(e){e.preventDefault();handleTap(idx)}})(i));court.appendChild(c);cells.push(c)}}
