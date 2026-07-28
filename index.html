@@ -43,6 +43,34 @@ button,input,select{font-family:Arial,Helvetica,sans-serif}
   padding:8px;background:radial-gradient(circle at center,rgba(62,18,0,.96),rgba(0,0,0,.99) 72%);
   overflow:hidden
 }
+#accessGate{
+  position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;
+  padding:16px;background:radial-gradient(circle at center,rgba(62,18,0,.96),rgba(0,0,0,.99) 72%);
+}
+#accessPanel{
+  width:96%;max-width:420px;padding:28px 24px;border:1px solid rgba(255,126,32,.58);
+  border-radius:16px;background:rgba(8,10,17,.98);text-align:center;
+  box-shadow:0 0 42px rgba(255,90,10,.22);
+}
+#accessPanel h1{font-size:1.5rem;margin-bottom:4px}
+#accessPanel h1 span{color:#f37418}
+#accessPanel .subtitle{font-size:.8rem;color:#c9b8a8;margin-bottom:20px}
+#accessEmail{
+  width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.05);color:#fff;font-size:1rem;margin-bottom:12px;box-sizing:border-box;
+}
+#accessVerifyBtn{
+  width:100%;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,#ff6417,#ff9b50);
+  color:#fff;font-weight:900;font-size:1rem;cursor:pointer;letter-spacing:.03em;
+}
+#accessVerifyBtn:disabled{opacity:.6;cursor:default}
+#accessMessage{margin-top:14px;font-size:.85rem;line-height:1.5;min-height:20px}
+#accessMessage.error{color:#ff8888}
+#accessMessage.ok{color:#59ff84}
+#accessSubscribeLink{
+  display:none;margin-top:16px;padding:12px 14px;border-radius:10px;text-decoration:none;
+  background:rgba(255,255,255,.06);color:#ffb274;font-weight:700;font-size:.85rem;border:1px solid rgba(255,178,116,.3);
+}
 #panel{
   width:96%;max-width:920px;height:calc(100vh - 16px);max-height:700px;
   padding:11px 13px;border:1px solid rgba(255,126,32,.58);
@@ -531,6 +559,17 @@ html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;co
 </div>
 
 <div id="message">Choose a player, training mode, and round time.</div>
+
+<div id="accessGate" style="display:none">
+  <div id="accessPanel">
+    <h1>Basketball <span>Hooporia</span></h1>
+    <div class="subtitle">Enter the email you subscribed with to access training.</div>
+    <input type="email" id="accessEmail" placeholder="you@example.com" autocomplete="email">
+    <button id="accessVerifyBtn" type="button">VERIFY ACCESS</button>
+    <div id="accessMessage"></div>
+    <a href="#" id="accessSubscribeLink" target="_blank" rel="noopener">Subscribe — $9.99/month →</a>
+  </div>
+</div>
 
 <div id="overlay">
   <div id="panel">
@@ -1776,6 +1815,87 @@ canvas.addEventListener("touchstart",handleCanvasClick,false);
 
 window.addEventListener("resize",resize,false);
 
+// ── ACCESS GATE — checks Stripe (via the deployed status-check backend)
+//    before showing anything else. Replace these two placeholders once
+//    you've deployed the backend and created the Stripe Payment Link.
+var BACKEND_URL="https://YOUR-BACKEND-URL.onrender.com";
+var SUBSCRIBE_LINK="https://buy.stripe.com/YOUR-LINK";
+var ACCESS_EMAIL_KEY="hooporia-access-email";
+
+var accessGate=document.getElementById("accessGate");
+var accessEmail=document.getElementById("accessEmail");
+var accessVerifyBtn=document.getElementById("accessVerifyBtn");
+var accessMessage=document.getElementById("accessMessage");
+var accessSubscribeLink=document.getElementById("accessSubscribeLink");
+accessSubscribeLink.href=SUBSCRIBE_LINK;
+
+function showAccessMessage(text,cls){
+  accessMessage.textContent=text;
+  accessMessage.className=cls||"";
+}
+
+function grantAccess(email){
+  try{localStorage.setItem(ACCESS_EMAIL_KEY,email);}catch(e){}
+  accessGate.style.display="none";
+  overlay.style.display="flex";
+}
+
+function verifyAccess(email,silent){
+  if(!email){
+    showAccessMessage("Enter your email to continue.","error");
+    return;
+  }
+  if(!silent){
+    accessVerifyBtn.disabled=true;
+    accessVerifyBtn.textContent="CHECKING...";
+    showAccessMessage("Checking your subscription...","");
+    accessSubscribeLink.style.display="none";
+  }
+  fetch(BACKEND_URL+"/api/subscription-status?email="+encodeURIComponent(email))
+    .then(function(res){return res.json();})
+    .then(function(data){
+      if(data.active){
+        if(!silent){showAccessMessage("Access verified!","ok");}
+        grantAccess(email);
+      }else{
+        showAccessMessage("No active subscription found for this email.","error");
+        accessSubscribeLink.style.display="block";
+      }
+    })
+    .catch(function(){
+      showAccessMessage("Couldn't reach the server. Check your connection and try again.","error");
+    })
+    .finally(function(){
+      accessVerifyBtn.disabled=false;
+      accessVerifyBtn.textContent="VERIFY ACCESS";
+    });
+}
+
+accessVerifyBtn.addEventListener("click",function(){
+  verifyAccess(accessEmail.value.trim().toLowerCase(),false);
+});
+accessEmail.addEventListener("keydown",function(e){
+  if(e.key==="Enter"){verifyAccess(accessEmail.value.trim().toLowerCase(),false);}
+});
+
+// GATE CURRENTLY DISABLED (see accessGate's inline display:none above) —
+// re-enable both together once the backend is deployed and BACKEND_URL /
+// SUBSCRIBE_LINK are filled in with real values.
+//
+// On load, if a previously-verified email is remembered, silently re-check
+// it — subscriptions can lapse, so a past success isn't trusted forever.
+/*
+(function(){
+  var remembered="";
+  try{remembered=localStorage.getItem(ACCESS_EMAIL_KEY)||"";}catch(e){}
+  if(remembered){
+    accessEmail.value=remembered;
+    showAccessMessage("Checking your subscription...","");
+    verifyAccess(remembered,true);
+  }
+})();
+*/
+
 activeProfile=profiles.active||"Guest";
 resize();
 refreshProfiles();
@@ -1854,18 +1974,18 @@ var LEVEL_CELLS={1:3,2:4,3:5,4:6,5:7};
 var TRAINING_ROUNDS=10;
 function getInitialCellCount(){return gameMode==='training'?LEVEL_CELLS[trainingLevel]:STARTING_CELLS}
 
-document.querySelectorAll('[data-gamemode]').forEach(btn=>{
+document.querySelector('#sequenceScreen').querySelectorAll('[data-gamemode]').forEach(btn=>{
   btn.onclick=function(){
     gameMode=btn.dataset.gamemode;
-    document.querySelectorAll('[data-gamemode]').forEach(b=>b.classList.remove('active'));
+    document.querySelector('#sequenceScreen').querySelectorAll('[data-gamemode]').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     $('levelRow').classList.toggle('hidden',gameMode!=='training');
   };
 });
-document.querySelectorAll('[data-level]').forEach(btn=>{
+document.querySelector('#sequenceScreen').querySelectorAll('[data-level]').forEach(btn=>{
   btn.onclick=function(){
     trainingLevel=Number(btn.dataset.level);
-    document.querySelectorAll('[data-level]').forEach(b=>b.classList.remove('active'));
+    document.querySelector('#sequenceScreen').querySelectorAll('[data-level]').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
   };
 });
@@ -2208,18 +2328,18 @@ var LEVEL_CELLS={1:3,2:4,3:5,4:6,5:7};
 var TRAINING_ROUNDS=10;
 function getInitialCellCount(){return gameMode==='training'?LEVEL_CELLS[trainingLevel]:STARTING_CELLS}
 
-document.querySelectorAll('[data-gamemode]').forEach(btn=>{
+document.querySelector('#basketballReflexScreen').querySelectorAll('[data-gamemode]').forEach(btn=>{
   btn.onclick=function(){
     gameMode=btn.dataset.gamemode;
-    document.querySelectorAll('[data-gamemode]').forEach(b=>b.classList.remove('rbb-active'));
+    document.querySelector('#basketballReflexScreen').querySelectorAll('[data-gamemode]').forEach(b=>b.classList.remove('rbb-active'));
     btn.classList.add('rbb-active');
     $('reflex_levelRow').classList.toggle('rbb-hidden',gameMode!=='training');
   };
 });
-document.querySelectorAll('[data-level]').forEach(btn=>{
+document.querySelector('#basketballReflexScreen').querySelectorAll('[data-level]').forEach(btn=>{
   btn.onclick=function(){
     trainingLevel=Number(btn.dataset.level);
-    document.querySelectorAll('[data-level]').forEach(b=>b.classList.remove('rbb-active'));
+    document.querySelector('#basketballReflexScreen').querySelectorAll('[data-level]').forEach(b=>b.classList.remove('rbb-active'));
     btn.classList.add('rbb-active');
   };
 });
@@ -2506,7 +2626,7 @@ $('reflexExitBtn').onclick=function(){stopFullStrobe();stopRecallTimer();$('refl
     <button class="rby-speed-btn rby-active" data-gamemode="game">GAME<small>Escalating, no limit</small></button>
     <button class="rby-speed-btn" data-gamemode="training">TRAINING<small>Fixed level, 10 rounds</small></button>
   </div>
-  <div class="rby-level-row hidden" id="replay_levelRow">
+  <div class="rby-level-row rby-hidden" id="replay_levelRow">
     <button class="rby-level-btn rby-active" data-level="1">L1<small>3 cells</small></button>
     <button class="rby-level-btn" data-level="2">L2<small>4 cells</small></button>
     <button class="rby-level-btn" data-level="3">L3<small>5 cells</small></button>
@@ -2560,18 +2680,18 @@ var LEVEL_CELLS={1:3,2:4,3:5,4:6,5:7};
 var TRAINING_ROUNDS=10;
 function getInitialCellCount(){return gameMode==='training'?LEVEL_CELLS[trainingLevel]:STARTING_CELLS}
 
-document.querySelectorAll('[data-gamemode]').forEach(btn=>{
+document.querySelector('#basketballReplayScreen').querySelectorAll('[data-gamemode]').forEach(btn=>{
   btn.onclick=function(){
     gameMode=btn.dataset.gamemode;
-    document.querySelectorAll('[data-gamemode]').forEach(b=>b.classList.remove('rby-active'));
+    document.querySelector('#basketballReplayScreen').querySelectorAll('[data-gamemode]').forEach(b=>b.classList.remove('rby-active'));
     btn.classList.add('rby-active');
     $('replay_levelRow').classList.toggle('rby-hidden',gameMode!=='training');
   };
 });
-document.querySelectorAll('[data-level]').forEach(btn=>{
+document.querySelector('#basketballReplayScreen').querySelectorAll('[data-level]').forEach(btn=>{
   btn.onclick=function(){
     trainingLevel=Number(btn.dataset.level);
-    document.querySelectorAll('[data-level]').forEach(b=>b.classList.remove('rby-active'));
+    document.querySelector('#basketballReplayScreen').querySelectorAll('[data-level]').forEach(b=>b.classList.remove('rby-active'));
     btn.classList.add('rby-active');
   };
 });
@@ -2865,7 +2985,7 @@ $('replayExitBtn').onclick=function(){stopFullStrobe();stopRecallTimer();$('repl
     <button class="rcg-speed-btn rcg-active" data-gamemode="game">GAME<small>Escalating, no limit</small></button>
     <button class="rcg-speed-btn" data-gamemode="training">TRAINING<small>Fixed level, 10 rounds</small></button>
   </div>
-  <div class="rcg-level-row hidden" id="recog_levelRow">
+  <div class="rcg-level-row rcg-hidden" id="recog_levelRow">
     <button class="rcg-level-btn rcg-active" data-level="1">L1<small>3 cells</small></button>
     <button class="rcg-level-btn" data-level="2">L2<small>4 cells</small></button>
     <button class="rcg-level-btn" data-level="3">L3<small>5 cells</small></button>
@@ -2919,18 +3039,18 @@ var LEVEL_CELLS={1:3,2:4,3:5,4:6,5:7};
 var TRAINING_ROUNDS=10;
 function getInitialCellCount(){return gameMode==='training'?LEVEL_CELLS[trainingLevel]:STARTING_CELLS}
 
-document.querySelectorAll('[data-gamemode]').forEach(btn=>{
+document.querySelector('#basketballRecognitionScreen').querySelectorAll('[data-gamemode]').forEach(btn=>{
   btn.onclick=function(){
     gameMode=btn.dataset.gamemode;
-    document.querySelectorAll('[data-gamemode]').forEach(b=>b.classList.remove('rcg-active'));
+    document.querySelector('#basketballRecognitionScreen').querySelectorAll('[data-gamemode]').forEach(b=>b.classList.remove('rcg-active'));
     btn.classList.add('rcg-active');
     $('recog_levelRow').classList.toggle('rcg-hidden',gameMode!=='training');
   };
 });
-document.querySelectorAll('[data-level]').forEach(btn=>{
+document.querySelector('#basketballRecognitionScreen').querySelectorAll('[data-level]').forEach(btn=>{
   btn.onclick=function(){
     trainingLevel=Number(btn.dataset.level);
-    document.querySelectorAll('[data-level]').forEach(b=>b.classList.remove('rcg-active'));
+    document.querySelector('#basketballRecognitionScreen').querySelectorAll('[data-level]').forEach(b=>b.classList.remove('rcg-active'));
     btn.classList.add('rcg-active');
   };
 });
